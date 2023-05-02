@@ -1,0 +1,6 @@
+{
+    "nrf-connect.toolchain.path": "PATH",
+    "nrf-connect.applications": [
+        "${workspaceFolder}"
+    ]
+}
