@@ -24,6 +24,7 @@ typedef struct movie{
 	char name[20];      /**< Name of the movie */
 	uint32_t price;     /**< Price of the movie */
 	uint32_t time;      /**< Time of the movie */
+	uint32_t id;		/**< ID of the movie */
 } movie;
 
 /**
@@ -47,17 +48,15 @@ void addMovie(char *mname, uint32_t mprice, uint32_t mtime);
 /**
  * @brief This function removes a movie from the linked list.
  * 
- * @param mname Name of the movie.
+ * @param id ID of the movie.
  */
-void removeMovie(char *mname);
+void removeMovie(uint32_t id);
 
 /**
- * @brief This function goes through the linked list and prints 
+ * @brief This function removes a movie from the linked list.
  * 
- * @param fifo Pointer to the FIFO structure.
- * @return The value of the oldest element (high priority element) in the FIFO structure.
- * @exception If the FIFO is empty, the return value is equal to 9999. 
+ * @param id ID of the movie.
  */
-uint32_t myFIFORemove(struct MYFIFO *fifo);
+void printMovie(uint32_t id);
 
 #endif
