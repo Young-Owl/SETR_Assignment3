@@ -15,6 +15,16 @@
 
 /* Set the pins used for buttons */
 /* Buttons 5-8 are connected to pins labeled A0 ... A3 (gpio0 pins 3,4,28,29) */
+
+#define COIN1 11
+#define COIN2 12
+#define COIN5 24
+#define COIN10 25
+#define RETURN 3
+#define SELECT 4
+#define DOWN 28
+#define UP 29
+
 const uint8_t buttons_pins[] = {11,12,24,25,3,4,28,29}; /* vector with pins where buttons are connected */
 
 /* Defining all global variables necessary for the Movie Vending Machine */
@@ -31,7 +41,8 @@ struct node{
 	struct node *next;
 };
 
-uint32_t credit = 0;
+volatile uint32_t credit = 0;
+volatile uint32_t coinAccept = 0;
 
 /* Get node ID for GPIO0, which has leds and buttons */ 
 #define GPIO0_NODE DT_NODELABEL(gpio0)
@@ -64,35 +75,36 @@ void button_pressed(const struct device *dev, struct gpio_callback *cb, uint32_t
 
 	/* Identify the button(s) that was(ere) hit via "Switch-Case" */
 	switch(buttons_pins[0]){
-		case 11:
+		case COIN1:
 			/* 1 EUR - 1st Internal Button */
 			printk("Introduced: 1 EUR \n\r");
+			credit += 1;
 			break;
-		case 12:
+		case COIN2:
 			/* 2 EUR - 2nd Internal Button */
 			printk("Introduced: 2 EUR \n\r");
 			break;
-		case 24:
+		case COIN5:
 			/* 5 EUR - 3rd Internal Button */
 			printk("Introduced: 5 EUR \n\r");
 			break;
-		case 25:
+		case COIN10:
 			/* 10 EUR - 4th Internal Button */
 			printk("Introduced: 10 EUR \n\r");
 			break;
-		case 3:
+		case RETURN:
 			/* RETURN Button */
 			printk("Returned: %d EUR \n\r",1);
 			break;
-		case 4:
+		case SELECT:
 			/* SELECT Button*/
 			printk("Selected: Something\n\r");
 			break;
-		case 28:
-			/* UP Button */
-			break;
-		case 29:
+		case DOWN:
 			/* DOWN Button */
+			break;
+		case UP:
+			/* UP Button */
 			break;
 		default:
 			printk("Error:\tButton not found\n\r");
