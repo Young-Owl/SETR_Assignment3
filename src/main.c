@@ -9,40 +9,34 @@
 #include <zephyr/devicetree.h>		/* for DT_NODELABEL() */
 #include <zephyr/drivers/gpio.h>    /* for GPIO api*/
 #include <zephyr/sys/printk.h>      /* for printk()*/
+#include "../libs/movie.h"
 
 /* Use a "big" sleep time to reduce CPU load (button detection int activated, not polled) */
 #define SLEEP_TIME_MS   60*1000 
 
+/*Events*/
+#define COIN1    11
+#define COIN2    12
+#define COIN5    24
+#define COIN10   25
+#define RETURN    3
+#define SELECT    4
+#define DOWN     28
+#define UP       29
+#define NO_EVENT  0
+
+/*States*/
+#define GETTING_COINS_ST 5
+#define MOVIE_ST         6
+#define BUY_ST           7
+
+/*Variables*/
+volatile int Event = 0; 
+
+
 /* Set the pins used for buttons */
 /* Buttons 5-8 are connected to pins labeled A0 ... A3 (gpio0 pins 3,4,28,29) */
-
-#define COIN1 11
-#define COIN2 12
-#define COIN5 24
-#define COIN10 25
-#define RETURN 3
-#define SELECT 4
-#define DOWN 28
-#define UP 29
-
-const uint8_t buttons_pins[] = {11,12,24,25,3,4,28,29}; /* vector with pins where buttons are connected */
-
-/* Defining all global variables necessary for the Movie Vending Machine */
-/* Struct for the Movie Info */
-struct movie{
-	char name[20];
-	uint32_t price;
-	uint32_t time;
-};
-
-/* Struct for the Linked List containing all movies */	
-struct node{
-	struct movie movie;
-	struct node *next;
-};
-
-volatile uint32_t credit = 0;
-volatile uint32_t coinAccept = 0;
+const uint8_t buttons_pins[] = {COIN1,COIN2,COIN5,COIN10,RETURN,SELECT,DOWN,UP}; /* vector with pins where buttons are connected */
 
 /* Get node ID for GPIO0, which has leds and buttons */ 
 #define GPIO0_NODE DT_NODELABEL(gpio0)
@@ -73,43 +67,12 @@ void button_pressed(const struct device *dev, struct gpio_callback *cb, uint32_t
 		disableInterrupts(buttons_pins[i]);
 	}
 
-	/* Identify the button(s) that was(ere) hit via "Switch-Case" */
-	switch(buttons_pins[0]){
-		case COIN1:
-			/* 1 EUR - 1st Internal Button */
-			printk("Introduced: 1 EUR \n\r");
-			credit += 1;
-			break;
-		case COIN2:
-			/* 2 EUR - 2nd Internal Button */
-			printk("Introduced: 2 EUR \n\r");
-			break;
-		case COIN5:
-			/* 5 EUR - 3rd Internal Button */
-			printk("Introduced: 5 EUR \n\r");
-			break;
-		case COIN10:
-			/* 10 EUR - 4th Internal Button */
-			printk("Introduced: 10 EUR \n\r");
-			break;
-		case RETURN:
-			/* RETURN Button */
-			printk("Returned: %d EUR \n\r",1);
-			break;
-		case SELECT:
-			/* SELECT Button*/
-			printk("Selected: Something\n\r");
-			break;
-		case DOWN:
-			/* DOWN Button */
-			break;
-		case UP:
-			/* UP Button */
-			break;
-		default:
-			printk("Error:\tButton not found\n\r");
-			break;
-	}
+	/*Read buttons*/
+	for(int i=0; i<sizeof(buttons_pins); i++){        
+        if(BIT(buttons_pins[i]) & pins) {
+            Event = buttons_pins[i];
+        }
+    } 
 
 	/* Enable interrupts for all buttons once again */
 	for(int i=0; i<sizeof(buttons_pins); i++){
@@ -173,8 +136,54 @@ void main(void)
 	/* Add the callback function by calling gpio_add_callback()   */
 	gpio_add_callback(gpio0_dev, &button_cb_data);
 
+	/* Declarations */
+	int credit = 0;
+	int state = GETTING_COINS_ST, next_state = state;
+	int state_coins = NO_EVENT;
+
 	while (1) {
-		/* Just sleep. Led on/off is done by the int callback */
-		k_msleep(SLEEP_TIME_MS);
+		
+		// State Machine
+		switch(state){
+			case GETTING_COINS_ST:
+				switch(Event){
+					case COIN1:           // Coin 1 inserted 
+						credit+=1;
+						break;
+					case COIN2:           // Coin 2 inserted
+						credit+=2;
+						break;
+					case COIN5:           // Coin 5 inserted
+						credit+=5;
+						break;
+					case COIN10:          // Coin 10 inserted
+						credit+=10;
+						break;
+					default:
+						Event = NO_EVENT; // Reset Event
+				}
+				Event = NO_EVENT;         // Reset Event
+				 
+				if (Event == DOWN || Event == UP) next_state = MOVIE_ST;
+				else next_state = GETTING_COINS_ST;
+				
+				break;
+			
+			case MOVIE_ST:
+				break; 
+
+			case BUY_ST:
+				break;
+
+			default:
+				break;	
+			state = next_state;
+		}
+
 	}
+
+	/* Just sleep. Led on/off is done by the int callback */
+	k_msleep(SLEEP_TIME_MS);
+	
 }
+
