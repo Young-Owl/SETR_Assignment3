@@ -23,7 +23,7 @@
  *
  */ 
 typedef struct movie{
-	char name[20];      /**< Name of the movie */
+	const char *name;   /**< Name of the movie */
 	uint32_t price;     /**< Price of the movie */
 	uint32_t hours;     /**< Hours of the movie */
 	uint32_t minutes;   /**< Minutes of the movie */
@@ -35,7 +35,7 @@ typedef struct movie{
  * 
  */	
 typedef struct node{
-	struct movie movie;
+	movie movie;
 	struct node *next;
 } node;
 
@@ -47,7 +47,7 @@ typedef struct node{
  * @param  mhours Hours of the movie.
  * @param  mminutes Minutes of the movie.
  */
-void addMovie(char *mname, uint32_t mprice, uint32_t mhours, uint32_t mminutes);
+void addMovie(const char *mname, uint32_t mprice, uint32_t mhours, uint32_t mminutes);
 
 /**
  * @brief This function removes a movie from the linked list.
