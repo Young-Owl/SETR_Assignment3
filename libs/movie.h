@@ -23,7 +23,8 @@
 typedef struct movie{
 	char name[20];      /**< Name of the movie */
 	uint32_t price;     /**< Price of the movie */
-	uint32_t time;      /**< Time of the movie */
+	uint32_t hours;     /**< Hours of the movie */
+	uint32_t minutes;   /**< Minutes of the movie */
 	uint32_t id;		/**< ID of the movie */
 } movie;
 
@@ -41,9 +42,10 @@ typedef struct node{
  * 
  * @param  mname Name of the movie.
  * @param  mprice Price of the movie.
- * @param  mtime Time of the movie.
+ * @param  mhours Hours of the movie.
+ * @param  mminutes Minutes of the movie.
  */
-void addMovie(char *mname, uint32_t mprice, uint32_t mtime);
+void addMovie(char *mname, uint32_t mprice, uint32_t mhours, uint32_t mminutes);
 
 /**
  * @brief This function removes a movie from the linked list.
@@ -53,10 +55,16 @@ void addMovie(char *mname, uint32_t mprice, uint32_t mtime);
 void removeMovie(uint32_t id);
 
 /**
- * @brief This function removes a movie from the linked list.
+ * @brief This function prints a movie from the linked list.
  * 
  * @param id ID of the movie.
  */
 void printMovie(uint32_t id);
+
+/**
+ * @brief This function returns the size of the movie list.
+ * 
+ */
+int sizeMovies();
 
 #endif
