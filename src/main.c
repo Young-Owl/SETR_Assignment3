@@ -262,7 +262,8 @@ void main(void)
 		}
 		state = next_state;
 
-	/* Just sleep. Led on/off is done by the int callback */
+	/* Just sleep. Led 
+	on/off is done by the int callback */
 	k_msleep(SLEEP_TIME_MS);
 	
 	}

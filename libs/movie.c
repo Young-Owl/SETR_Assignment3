@@ -13,11 +13,12 @@
 uint32_t id = 0;
 node *head = NULL;
 
-void addMovie(char *mname, uint32_t mprice, uint32_t mtime){
+void addMovie(char *mname, uint32_t mprice, uint32_t mhours, uint32_t mminut){
     node *newNode = (node*) malloc(sizeof(node));
     strcpy(newNode->movie.name, mname);
     newNode->movie.price = mprice;
-    newNode->movie.time = mtime;
+    newNode->movie.hours = mhours;
+    newNode->movie.minutes = mminut;
     newNode->movie.id = id; 
     id++;
     newNode->next = head;
