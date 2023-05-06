@@ -14,8 +14,8 @@ uint32_t id = 0;
 node *head = NULL;
 
 void addMovie(char *mname, uint32_t mprice, uint32_t mhours, uint32_t mminut){
-    node *newNode = (node*) malloc(sizeof(node));
-    strcpy(newNode->movie.name, mname);
+    node *newNode;
+    strcpy(*newNode->movie.name, mname);
     newNode->movie.price = mprice;
     newNode->movie.hours = mhours;
     newNode->movie.minutes = mminut;
@@ -49,7 +49,7 @@ void printMovie(uint32_t id){
     while(temp != NULL){
         if(temp->movie.id == id){
             printk("--------------------\n");
-            printk("Name: %s\n", temp->movie.name);
+            //printk("Name: %s\n", temp->movie.name);
             printk("Price: %d\n", temp->movie.price);
             printk("Time: %d:%d\n", temp->movie.hours, temp->movie.minutes);
             printk("--------------------\n");
