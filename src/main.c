@@ -14,7 +14,7 @@
 /* Use a "big" sleep time to reduce CPU load (button detection int activated, not polled) */
 #define SLEEP_TIME_MS   60*1000 
 
-/*Events*/
+/* Variables */
 #define COIN1    11
 #define COIN2    12
 #define COIN5    24
@@ -25,17 +25,18 @@
 #define UP       29
 #define NO_EVENT  0
 
-/*States*/
+/* States */
 #define GETTING_COINS_ST 5
 #define MOVIE_ST         6
 #define BUY_ST           7
 
-/*Variables*/
-volatile int Event = 0; 
+/* Events */
+volatile int Event = 0;
 
-
-/* Set the pins used for buttons */
+/* Set the pins used for LED and buttons */
+/* LED 1 and buttons 1-4 are the ones on board */
 /* Buttons 5-8 are connected to pins labeled A0 ... A3 (gpio0 pins 3,4,28,29) */
+#define LED1_PIN 13
 const uint8_t buttons_pins[] = {COIN1,COIN2,COIN5,COIN10,RETURN,SELECT,DOWN,UP}; /* vector with pins where buttons are connected */
 
 /* Get node ID for GPIO0, which has leds and buttons */ 
@@ -48,13 +49,13 @@ static const struct device * gpio0_dev = DEVICE_DT_GET(GPIO0_NODE);
 *  It defines e.g. which pin triggers the callback and the address of the function */
 static struct gpio_callback button_cb_data;
 
+/* Function that enable the interrupts */
 void enableInterrupts(int pin){
-	// Enable interrupts for the pin
 	gpio_pin_interrupt_configure(gpio0_dev, pin, GPIO_INT_EDGE_TO_ACTIVE);
 }
 
+/* Function that disable the interrupts */
 void disableInterrupts(int pin){
-	// Disable interrupts for the pin
 	gpio_pin_interrupt_configure(gpio0_dev, pin, GPIO_INT_DISABLE);
 }
 
@@ -62,17 +63,43 @@ void disableInterrupts(int pin){
 /* that is called when the button is pressed */
 void button_pressed(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
+	int button=0;
+
 	/* Disable interrupts for all buttons in order to prevent the "Bouncing effect" */
 	for(int i=0; i<sizeof(buttons_pins); i++){
 		disableInterrupts(buttons_pins[i]);
 	}
 
-	/*Read buttons*/
+	/* Toggle led1 */
+	gpio_pin_toggle(gpio0_dev,LED1_PIN);
+
+	/* Read buttons */
 	for(int i=0; i<sizeof(buttons_pins); i++){        
         if(BIT(buttons_pins[i]) & pins) {
-            Event = buttons_pins[i];
+            button = buttons_pins[i];
         }
     } 
+
+	//printk("button = %d \n\r",button);
+
+	switch (button){
+		case COIN1:
+			Event = COIN1;
+			break;
+		case COIN2:
+			Event = COIN2;
+			break;
+		case COIN5:
+			Event = COIN5;
+			break;
+		case COIN10:
+			Event = COIN10;
+			break;
+		default:
+			break;
+	}
+
+	//printk("Event = %d\n\r",Event);
 
 	/* Enable interrupts for all buttons once again */
 	for(int i=0; i<sizeof(buttons_pins); i++){
@@ -80,14 +107,11 @@ void button_pressed(const struct device *dev, struct gpio_callback *cb, uint32_t
 	}
 }
 
+/* The main function */
 void main(void)
 {
 	int ret, i;
 	uint32_t pinmask = 0; /* Mask for setting the pins that shall generate interrupts */
-	
-	/* Initial startup message */
-	printk("------Movie Vending Machine------\n\r");
-	printk("Hit buttons 1-8 (1-4 for inserting money, 5-8 to navigate through the contents...\n\r");
 
 	/* Check if gpio0 device is ready */
 	if (!device_is_ready(gpio0_dev)) {
@@ -97,7 +121,7 @@ void main(void)
 		printk("Success: gpio0 device is ready\n");
 	}
 
-	/* Configure the GPIO pins - IOPINS 2,4,28 and 29 for input */
+	/* Configure the GPIO pins - LED1 for output and buttons 1-4 + IOPINS 2,4,28 and 29 for input */
 	ret = gpio_pin_configure(gpio0_dev,LED1_PIN, GPIO_OUTPUT_ACTIVE);
 	if (ret < 0) {
 		printk("Error: gpio_pin_configure failed for led1, error:%d\n\r", ret);
@@ -139,13 +163,16 @@ void main(void)
 	/* Declarations */
 	int credit = 0;
 	int state = GETTING_COINS_ST, next_state = state;
-	int state_coins = NO_EVENT;
+	
+	/* Initial startup message */
+	printk("\n------Movie Vending Machine------\n\r");
+	printk("Hit buttons 1-8 (1-4 for inserting money, 5-8 to navigate through the contents...)\n\r");
 
 	while (1) {
-		
-		// State Machine
-		switch(state){
+		switch (state){
 			case GETTING_COINS_ST:
+				printk("credit = %d\r", credit);
+				
 				switch(Event){
 					case COIN1:           // Coin 1 inserted 
 						credit+=1;
@@ -159,28 +186,29 @@ void main(void)
 					case COIN10:          // Coin 10 inserted
 						credit+=10;
 						break;
+					case NO_EVENT:        // No Coin inserted
+						break;
 					default:
-						Event = NO_EVENT; // Reset Event
+						break;
 				}
-				Event = NO_EVENT;         // Reset Event
-				 
+
+				//if (Event != NO_EVENT) printk("Credit: %d\r", credit); (not work)
+				
 				if (Event == DOWN || Event == UP) next_state = MOVIE_ST;
 				else next_state = GETTING_COINS_ST;
+
+				Event = NO_EVENT;         // Reset Event
 				
 				break;
-			
-			case MOVIE_ST:
-				break; 
 
-			case BUY_ST:
+			case MOVIE_ST:
+
 				break;
 
 			default:
-				break;	
-			state = next_state;
+				break;
 		}
-
-	}
+		state = next_state;
 
 	/* Just sleep. Led on/off is done by the int callback */
 	k_msleep(SLEEP_TIME_MS);
