@@ -11,11 +11,11 @@
 #include "movie.h"
 
 uint32_t id = 0;
-node *head = NULL;
+static node *head = NULL;
 
-void addMovie(char *mname, uint32_t mprice, uint32_t mhours, uint32_t mminut){
-    node *newNode = (node*) malloc(sizeof(node));
-    strcpy(newNode->movie.name, mname);
+void addMovie(const char *mname, uint32_t mprice, uint32_t mhours, uint32_t mminut){
+    node *newNode = (node*)malloc(sizeof(node));
+    newNode->movie.name = strdup(mname);
     newNode->movie.price = mprice;
     newNode->movie.hours = mhours;
     newNode->movie.minutes = mminut;

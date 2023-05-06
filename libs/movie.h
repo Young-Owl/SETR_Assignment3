@@ -23,7 +23,7 @@
  *
  */ 
 typedef struct movie{
-	char name[20];      /**< Name of the movie */
+	const char *name;   /**< Name of the movie */
 	uint32_t price;     /**< Price of the movie */
 	uint32_t hours;     /**< Hours of the movie */
 	uint32_t minutes;   /**< Minutes of the movie */
@@ -35,7 +35,7 @@ typedef struct movie{
  * 
  */	
 typedef struct node{
-	struct movie movie;
+	movie movie;
 	struct node *next;
 } node;
 
