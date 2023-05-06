@@ -50,10 +50,20 @@ void printMovie(uint32_t id){
             printk("--------------------\n");
             printk("Name: %s\n", temp->movie.name);
             printk("Price: %d\n", temp->movie.price);
-            printk("Time: %d\n", temp->movie.time);
+            printk("Time: %d:%d\n", temp->movie.hours, temp->movie.minutes);
             printk("--------------------\n");
             return;
         }
         temp = temp->next;
     }
+}
+
+int sizeMovies(){
+    node *temp = head;
+    int size = 0;
+    while(temp != NULL){
+        size++;
+        temp = temp->next;
+    }
+    return size;
 }

@@ -85,10 +85,6 @@ void main(void)
 	int ret, i;
 	uint32_t pinmask = 0; /* Mask for setting the pins that shall generate interrupts */
 	
-	/* Initial startup message */
-	printk("------Movie Vending Machine------\n\r");
-	printk("Hit buttons 1-8 (1-4 for inserting money, 5-8 to navigate through the contents...\n\r");
-
 	/* Check if gpio0 device is ready */
 	if (!device_is_ready(gpio0_dev)) {
 		printk("Error: gpio0 device is not ready\n");
@@ -126,6 +122,10 @@ void main(void)
 	/* HW init done!*/
 	printk("All devices initialized sucesfully!\n\r");
 
+	/* Initial startup message */
+	printk("------Movie Vending Machine------\n\r");
+	printk("Hit buttons 1-8 (1-4 for inserting money, 5-8 to navigate through the contents...\n\r");
+
 	/* Initialize the static struct gpio_callback variable   */
 	pinmask=0;
 	for(i=0; i<sizeof(buttons_pins); i++) {
@@ -138,8 +138,20 @@ void main(void)
 
 	/* Declarations */
 	int credit = 0;
+	node *head = NULL;
+	int movie_id = 0;
+	int movie_size = 0;
 	int state = GETTING_COINS_ST, next_state = state;
 	int state_coins = NO_EVENT;
+
+	/* Movie Additions */
+	addMovie("Movie A", 9, 19, 0);
+	addMovie("Movie A", 11, 21, 0);
+	addMovie("Movie A", 9, 23, 0);
+	addMovie("Movie B", 10, 19, 0);
+	addMovie("Movie B", 12, 21, 0);
+
+	movie_size = sizeMovies();
 
 	while (1) {
 		
@@ -170,6 +182,31 @@ void main(void)
 				break;
 			
 			case MOVIE_ST:
+				switch(Event){
+					case DOWN:            // Down button pressed
+						if(movie_id == 0) {
+							movie_id = movie_size-1;
+						}
+						else {
+							movie_id--;
+						}
+
+						printMovie(movie_id);
+
+						break;
+					case UP:              // Up button pressed
+						if(movie_id == movie_size-1) {
+							movie_id = 0;
+						}
+						else {
+							movie_id++;
+						}
+
+						printMovie(movie_id);
+						break;
+					default:
+						Event = NO_EVENT; // Reset Event
+				}
 				break; 
 
 			case BUY_ST:
