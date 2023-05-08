@@ -190,18 +190,19 @@ void main(void)
 	movie_size = sizeMovies();*/
 
 	movie movies[5]={
-		{"Movie A", 9, 19, 0},
-		{"Movie A", 11, 21, 0},
-		{"Movie A", 9, 23, 0},
-		{"Movie B", 10, 19, 0},
-		{"Movie B", 12, 21, 0}
+		{"A", 9, 19, 0},
+		{"A", 11, 21, 0},
+		{"A", 9, 23, 0},
+		{"B", 10, 19, 0},
+		{"B", 12, 21, 0}
 	};
 
 	movie_size = 5;
 
 	//printk("state = %d\n",state);
-	printk("\n\n");
+	printk("\n");
 	while (1) {
+		//printk("\033[3J\033[H\033[2J"); // Clear screen (VT100 escape sequences)
 		switch (state){
 			case GETTING_COINS_ST:
 				printk("Credit = %.3d EUR\r", credit);
@@ -230,12 +231,13 @@ void main(void)
 						next_state = MOVIE_ST;
 						break;
 					case SELECT:		  // Select button pressed
+						next_state = BUY_ST;
 						break;
 					case RETURN: 		  // Return button pressed
 						printk("\n%.4d EUR return\n",credit);
 						printk("\n");
 						credit = 0;
-						next_state = GETTING_COINS_ST;
+						Event = NO_EVENT;
 						break;
 					case NO_EVENT:        // No Coin inserted
 						break;
@@ -273,10 +275,25 @@ void main(void)
 				break; 
 			
 			case BUY_ST:
-				//if (credit < )
+				printk("\n");
+				if (credit < movies[movie_id].price){
+					printk("Not enough credit. Ticket no issued.\n");
+					next_state = GETTING_COINS_ST;
+				}
+				else{
+					printk("Ticket for movie %s , session %d:%.2d issued.",movies[movie_id].name, movies[movie_id].hours, movies[movie_id].minutes);
+					credit -= movies[movie_id].price;
+					printk("Remaining credit: %.2d EUR\n", credit);
+					
+					next_state = GETTING_COINS_ST;
+				}
+				printk("\n");
+				Event = NO_EVENT;
 				break;
 
+
 			default:
+				Event = NO_EVENT;
 				break;
 		}
 		state = next_state;
