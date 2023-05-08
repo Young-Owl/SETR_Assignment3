@@ -14,7 +14,7 @@
 /* Use a "big" sleep time to reduce CPU load (button detection int activated, not polled) */
 #define SLEEP_TIME_MS   60*1000 
 
-/* Variables */
+/* Events */
 #define COIN1    11
 #define COIN2    12
 #define COIN5    24
@@ -80,8 +80,6 @@ void button_pressed(const struct device *dev, struct gpio_callback *cb, uint32_t
         }
     } 
 
-	//printk("button = %d \n\r",button);
-
 	switch (button){
 		case COIN1:
 			Event = COIN1;
@@ -110,8 +108,6 @@ void button_pressed(const struct device *dev, struct gpio_callback *cb, uint32_t
 		default:
 			break;
 	}
-
-	//printk("Event = %d\n\r",Event);
 
 	/* Enable interrupts for all buttons once again */
 	for(int i=0; i<sizeof(buttons_pins); i++){
@@ -193,10 +189,12 @@ void main(void)
 
 	//movie_size = sizeMovies();
 
+	//printk("state = %d\n",state);
+
 	while (1) {
 		switch (state){
 			case GETTING_COINS_ST:
-				printk("credit = %d EUR\r", credit);
+				printk("credit = %.4d EUR\r", credit);
 				
 				switch(Event){
 					case COIN1:           // Coin 1 inserted 
@@ -211,70 +209,67 @@ void main(void)
 					case COIN10:          // Coin 10 inserted
 						credit+=10;
 						break;
+					case DOWN:			  // Down button pressed
+						next_state = MOVIE_ST;
+						break;
+					case UP:  			  // Up button pressed
+						next_state = MOVIE_ST;
+						break;
+					case RETURN: 		  // Return button pressed
+						printk("\n%.4d EUR return\n",credit);
+						printk("\n");
+						credit = 0;
+						next_state = GETTING_COINS_ST;
+						break;
 					case NO_EVENT:        // No Coin inserted
 						break;
 					default:
 						break;
 				}
 
-				//if (Event != NO_EVENT) printk("Credit: %d EUR\r", credit); (not work)
-				
-				/*if (Event == DOWN || Event == UP) next_state = MOVIE_ST;
-				else if (Event == RETURN){
-					//printk("%d EUR return",credit);
-					credit = 0;
-					next_state = GETTING_COINS_ST;
-				}
-				else next_state = GETTING_COINS_ST;*/
-
 				Event = NO_EVENT;         // Reset Event
-				
 				break;
 
 			case MOVIE_ST:
+				printk("credit = %.4d EUR\r", credit);
+					
 				switch(Event){
 					case DOWN:            // Down button pressed
-						if(movie_id == 0) {
-							movie_id = movie_size-1;
-						}
-						else {
-							movie_id--;
-						}
-
-						printMovie(movie_id);
-
+						if(movie_id == 0)	movie_id = movie_size-1;
+						else movie_id--;
+						next_state = GETTING_COINS_ST;
 						break;
 					case UP:              // Up button pressed
-						if(movie_id == movie_size-1) {
-							movie_id = 0;
-						}
-						else {
-							movie_id++;
-						}
-
-						printMovie(movie_id);
+						if(movie_id == movie_size-1) movie_id = 0;
+						else movie_id++;
+						next_state = GETTING_COINS_ST;
 						break;
 					case SELECT: 
 						next_state = BUY_ST;
+						break;
 					default:
 						Event = NO_EVENT; // Reset Event
+						break;
 				}
+				printMovie(movie_id);
+
 				Event = NO_EVENT;
 				break; 
 			
 			case BUY_ST:
+				//if (credit < )
 				break;
 
 			default:
 				break;
 		}
 		state = next_state;
+	
+	}
 
 	/* Just sleep. Led 
 	on/off is done by the int callback */
 	k_msleep(SLEEP_TIME_MS);
-	
-	}
 }
 
 
