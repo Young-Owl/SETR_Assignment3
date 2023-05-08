@@ -185,35 +185,51 @@ void main(void)
 	addMovie("Movie A", 11, 21, 0);
 	addMovie("Movie A", 9, 23, 0);
 	addMovie("Movie B", 10, 19, 0);
-	addMovie("Movie B", 12, 21, 0);*/
+	addMovie("Movie B", 12, 21, 0);
 
-	//movie_size = sizeMovies();
+	movie_size = sizeMovies();*/
+
+	movie movies[5]={
+		{"Movie A", 9, 19, 0},
+		{"Movie A", 11, 21, 0},
+		{"Movie A", 9, 23, 0},
+		{"Movie B", 10, 19, 0},
+		{"Movie B", 12, 21, 0}
+	};
+
+	movie_size = 5;
 
 	//printk("state = %d\n",state);
-
+	printk("\n\n");
 	while (1) {
 		switch (state){
 			case GETTING_COINS_ST:
-				printk("credit = %.4d EUR\r", credit);
+				printk("Credit = %.3d EUR\r", credit);
 				
 				switch(Event){
 					case COIN1:           // Coin 1 inserted 
 						credit+=1;
+						Event = NO_EVENT;         // Reset Event
 						break;
 					case COIN2:           // Coin 2 inserted
 						credit+=2;
+						Event = NO_EVENT;         // Reset Event
 						break;
 					case COIN5:           // Coin 5 inserted
 						credit+=5;
+						Event = NO_EVENT;         // Reset Event
 						break;
 					case COIN10:          // Coin 10 inserted
 						credit+=10;
+						Event = NO_EVENT;         // Reset Event
 						break;
 					case DOWN:			  // Down button pressed
 						next_state = MOVIE_ST;
 						break;
 					case UP:  			  // Up button pressed
 						next_state = MOVIE_ST;
+						break;
+					case SELECT:		  // Select button pressed
 						break;
 					case RETURN: 		  // Return button pressed
 						printk("\n%.4d EUR return\n",credit);
@@ -226,12 +242,10 @@ void main(void)
 					default:
 						break;
 				}
-
-				Event = NO_EVENT;         // Reset Event
 				break;
 
 			case MOVIE_ST:
-				printk("credit = %.4d EUR\r", credit);
+				//printk("credit = %.4d EUR\r", credit);
 					
 				switch(Event){
 					case DOWN:            // Down button pressed
@@ -251,7 +265,9 @@ void main(void)
 						Event = NO_EVENT; // Reset Event
 						break;
 				}
-				printMovie(movie_id);
+				printk("\t\t\tMovie: %s   |", movies[movie_id].name);
+				printk("Price: %.2d   |", movies[movie_id].price);
+				printk("Time: %d:%.2d\r", movies[movie_id].hours, movies[movie_id].minutes);
 
 				Event = NO_EVENT;
 				break; 

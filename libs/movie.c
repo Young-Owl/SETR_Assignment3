@@ -49,7 +49,7 @@ void printMovie(uint32_t id){
     while(temp != NULL){
         if(temp->movie.id == id){
             printk("--------------------\n");
-            //printk("Name: %s\n", temp->movie.name);
+            printk("Name: %s\n", temp->movie.name);
             printk("Price: %d\n", temp->movie.price);
             printk("Time: %d:%d\n", temp->movie.hours, temp->movie.minutes);
             printk("--------------------\n");
