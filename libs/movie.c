@@ -3,7 +3,7 @@
  * 
  * 
  * @author Gonçalo Soares & Gonçalo Rodrigues
- * @date 12 March 2023
+ * @date 9 May 2023
  * @bug No known bugs.
  */
 
@@ -14,7 +14,7 @@ uint32_t id = 0;
 static node *head = NULL;
 
 void addMovie(const char *mname, uint32_t mprice, uint32_t mhours, uint32_t mminut){
-    node *newNode = (node*)malloc(sizeof(node));
+    node *newNode = (node*)k_malloc(sizeof(node));
     newNode->movie.name = mname;
     newNode->movie.price = mprice;
     newNode->movie.hours = mhours;
@@ -36,7 +36,7 @@ void removeMovie(uint32_t id){
             else{
                 prev->next = temp->next;
             }
-            free(temp);
+            k_free(temp);
             return;
         }
         prev = temp;
@@ -48,12 +48,11 @@ void printMovie(uint32_t id){
     node *temp = head;
     while(temp != NULL){
         if(temp->movie.id == id){
-            printk("--------------------\n");
-            printk("Name: %s\n", temp->movie.name);
-            printk("Price: %d\n", temp->movie.price);
-            printk("Time: %d:%d\n", temp->movie.hours, temp->movie.minutes);
-            printk("--------------------\n");
-            return;
+            printk("\t\t\tMovie: %s   |", temp->movie.name);
+			printk("Price: %.2d   |", temp->movie.price);
+			printk("Time: %d:%.2d\r", temp->movie.hours, temp->movie.minutes);
+
+            break;
         }
         temp = temp->next;
     }
@@ -67,4 +66,15 @@ int sizeMovies(){
         temp = temp->next;
     }
     return size;
+}
+
+movie returnMovie(uint32_t id){
+    node *temp = head;
+    while(temp != NULL){
+        if(temp->movie.id == id){
+            return temp->movie;
+        }
+        temp = temp->next;
+    }
+    return temp->movie;
 }

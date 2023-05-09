@@ -1,9 +1,9 @@
 /** @file movie.h
- * @brief Definition of the struct data and the function prototype for FIFO
+ * @brief Definition of the struct data and the functions prototypes the Movie List.
  * 
  * 
  * @author Gonçalo Soares & Gonçalo Rodrigues
- * @date 12 March 2023
+ * @date 9 May 2023
  * @bug No known bugs.
  */
 
@@ -15,8 +15,6 @@
 
 #ifndef MOVIE_H
 #define MOVIE_H
-
-#define FIFO_SIZE 10
 
 /**
  * @brief This struture contains the info for one movie.
@@ -68,5 +66,11 @@ void printMovie(uint32_t id);
  * 
  */
 int sizeMovies();
+
+/**
+ * @brief This function returns a movie from the linked list.
+ * 
+ */
+movie returnMovie(uint32_t id);
 
 #endif

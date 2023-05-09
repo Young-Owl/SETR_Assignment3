@@ -170,39 +170,25 @@ void main(void)
 	gpio_add_callback(gpio0_dev, &button_cb_data);
 
 	/* Declarations */
-	int credit = 0;
-	//node *head = NULL;
-	int movie_id = 0;
-	int movie_size = 0;
+	int credit = 0, movie_id = 0, movie_size = 0;
 	int state = GETTING_COINS_ST, next_state = state;
+	movie infoMovie;
 	
 	/* Initial startup message */
 	printk("\n------Movie Vending Machine------\n\r");
 	printk("Hit buttons 1-8 (1-4 for inserting money, 5-8 to navigate through the contents...)\n\r");
 
 	/* Movie Additions */
-	/*addMovie("Movie A", 9, 19, 0);
+	addMovie("Movie A", 9, 19, 0);
 	addMovie("Movie A", 11, 21, 0);
 	addMovie("Movie A", 9, 23, 0);
 	addMovie("Movie B", 10, 19, 0);
 	addMovie("Movie B", 12, 21, 0);
 
-	movie_size = sizeMovies();*/
+	movie_size = sizeMovies();
 
-	movie movies[5]={
-		{"A", 9, 19, 0},
-		{"A", 11, 21, 0},
-		{"A", 9, 23, 0},
-		{"B", 10, 19, 0},
-		{"B", 12, 21, 0}
-	};
-
-	movie_size = 5;
-
-	//printk("state = %d\n",state);
 	printk("\n");
 	while (1) {
-		//printk("\033[3J\033[H\033[2J"); // Clear screen (VT100 escape sequences)
 		switch (state){
 			case GETTING_COINS_ST:
 				printk("Credit = %.3d EUR\r", credit);
@@ -247,8 +233,6 @@ void main(void)
 				break;
 
 			case MOVIE_ST:
-				//printk("credit = %.4d EUR\r", credit);
-					
 				switch(Event){
 					case DOWN:            // Down button pressed
 						if(movie_id == 0)	movie_id = movie_size-1;
@@ -267,23 +251,23 @@ void main(void)
 						Event = NO_EVENT; // Reset Event
 						break;
 				}
-				printk("\t\t\tMovie: %s   |", movies[movie_id].name);
-				printk("Price: %.2d   |", movies[movie_id].price);
-				printk("Time: %d:%.2d\r", movies[movie_id].hours, movies[movie_id].minutes);
+
+				printMovie(movie_id);
 
 				Event = NO_EVENT;
 				break; 
 			
 			case BUY_ST:
+				infoMovie = returnMovie(movie_id);
 				printk("\n");
-				if (credit < movies[movie_id].price){
+				if (credit < infoMovie.price){
 					printk("Not enough credit. Ticket no issued.\n");
 					next_state = GETTING_COINS_ST;
 				}
 				else{
-					printk("Ticket for movie %s , session %d:%.2d issued.",movies[movie_id].name, movies[movie_id].hours, movies[movie_id].minutes);
-					credit -= movies[movie_id].price;
-					printk("Remaining credit: %.2d EUR\n", credit);
+					printk("Ticket for movie %s, session %d:%.2d issued.",infoMovie.name, infoMovie.hours, infoMovie.minutes);
+					credit -= infoMovie.price;
+					printk(" Remaining credit: %.2d EUR\n", credit);
 					
 					next_state = GETTING_COINS_ST;
 				}
