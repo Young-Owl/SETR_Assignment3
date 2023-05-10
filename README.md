@@ -11,3 +11,6 @@ All button readings are via interrupts (Callback function). The buttons had "Bou
 ## State Machine
 
 UML Design, with 4 different states for the needed steps through the interaction process. 
+
+
+<img src="Maq._estados_SETR.png" alt="State Machine" width="1000">

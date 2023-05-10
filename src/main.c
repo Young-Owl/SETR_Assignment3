@@ -128,6 +128,40 @@ void button_pressed(const struct device *dev, struct gpio_callback *cb, uint32_t
 	}
 }
 
+/*!
+\dot
+digraph finite_state_machine {
+	rankdir=LR;
+    nodesep=0.;
+	size="10"
+
+	node [shape = doublecircle]; GETTING_COINS_ST
+	node [shape = circle];
+
+    GETTING_COINS_ST -> GETTING_COINS_ST [ label = "                                                    COIN1/credit+=1"];
+    GETTING_COINS_ST -> GETTING_COINS_ST [ label = "                                                    COIN2/credit+=2" ];
+    GETTING_COINS_ST -> GETTING_COINS_ST [ label = "                                                    COIN5/credit+=5" ];
+    GETTING_COINS_ST -> GETTING_COINS_ST [ label = "                                                        COIN10/credit+=10" ];
+    GETTING_COINS_ST -> GETTING_COINS_ST [ label = "                                                     RETURN/credit=0" ];
+    GETTING_COINS_ST -> GETTING_COINS_ST [ label = "                                            NO_EVENT/" ];
+
+	GETTING_COINS_ST -> MOVIE_ST [ label = "UP[popcornFlag = 0]/" ];
+    GETTING_COINS_ST -> MOVIE_ST [ label = "DOWN[popcornFlag = 0]/" ];
+
+    MOVIE_ST -> POPCORN_ST [ label = "SELECT/"];
+    MOVIE_ST -> GETTING_COINS_ST;
+
+    POPCORN_ST -> BUY_ST [ label = "SELECT/"];
+    POPCORN_ST -> GETTING_COINS_ST;
+    GETTING_COINS_ST -> POPCORN_ST [ label = "UP[popcornFlag = 1]/" ];
+    GETTING_COINS_ST -> POPCORN_ST [ label = "DOWN[popcornFlag = 1]/" ];
+
+    BUY_ST -> GETTING_COINS_ST [ label = "/credit - sumAll"];
+
+}
+\enddot
+*/
+
 /* The main function */
 void main(void)
 {
@@ -182,7 +216,7 @@ void main(void)
 	gpio_add_callback(gpio0_dev, &button_cb_data);
 
 	/* Variables to store all the information needed */
-	int credit = 0, movie_id = 0, movie_size = 0, popcorn = 0, sumAll = 0;
+	int credit = 0, movie_id = 0, movie_size = 0, popcorn = 0, sumAll = 0, popcornFlag = 0;
 	int state = GETTING_COINS_ST, next_state = state;
 	movie infoMovie;
 	
@@ -224,9 +258,11 @@ void main(void)
 						Event = NO_EVENT;         // Reset Event
 						break;
 					case DOWN:			  // Down button pressed
+						if(popcornFlag == 1) next_state = POPCORN_ST;
 						next_state = MOVIE_ST;
 						break;
 					case UP:  			  // Up button pressed
+						if(popcornFlag == 1) next_state = POPCORN_ST;
 						next_state = MOVIE_ST;
 						break;
 					case SELECT:		  // Select button pressed
@@ -271,6 +307,32 @@ void main(void)
 				Event = NO_EVENT;
 				break; 
 			
+			/* Popcorn State goes after the Movie State */
+			case POPCORN_ST:
+				popcornFlag = 1;
+				printk("Popcorn Quantity: ");
+				switch(Event){
+					case DOWN:            // Down button pressed
+						if(popcorn == 0)	popcorn = 0;
+						else popcorn--;
+						next_state = GETTING_COINS_ST;
+						break;
+					case UP:              // Up button pressed
+						if(popcorn == 10) 	popcorn = 10;
+						else popcorn++;
+						next_state = GETTING_COINS_ST;
+						break;
+					case SELECT: 
+						popcornFlag = 0;
+						next_state = BUY_ST;
+						break;
+					default:
+						Event = NO_EVENT; // Reset Event
+						break;
+				}
+				printk("%.2d (Price: %.2d EUR)\r", popcorn, popcorn*2);
+				break;
+
 			/* Buy State goes after Movie and Popcorn States */
 			case BUY_ST:
 				infoMovie = returnMovie(movie_id);
@@ -290,30 +352,6 @@ void main(void)
 				}
 				printk("\n");
 				Event = NO_EVENT;
-				break;
-
-			/* Popcorn State goes after the Movie State */
-			case POPCORN_ST:
-				printk("Popcorn Quantity: ");
-				switch(Event){
-					case DOWN:            // Down button pressed
-						if(popcorn == 0)	popcorn = 0;
-						else popcorn--;
-						next_state = GETTING_COINS_ST;
-						break;
-					case UP:              // Up button pressed
-						if(popcorn == 10) 	popcorn = 10;
-						else popcorn++;
-						next_state = GETTING_COINS_ST;
-						break;
-					case SELECT: 
-						next_state = BUY_ST;
-						break;
-					default:
-						Event = NO_EVENT; // Reset Event
-						break;
-				}
-				printk("%.2d (Price: %.2d EUR)\r", popcorn, popcorn*2);
 				break;
 
 			default:

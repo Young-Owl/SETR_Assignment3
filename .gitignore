@@ -7,3 +7,7 @@
 
 # vscode
 .vscode
+
+#doxygen
+/docs/html
+.vscode/settings.json
