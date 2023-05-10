@@ -1,8 +1,20 @@
-/*
- * Copyright (c) 2012-2014 Wind River Systems, Inc.
- *
- * SPDX-License-Identifier: Apache-2.0
+/** @file main.c
+ * @brief Main file for the Movie Vending Machine.
+ * 
+ * This file contains all the code for the Movie Vending machine.
+ * It uses 4 internal buttons and 4 external buttons to navigate through the contents,
+ * having a "not optimal" way to minimize the bouncing effect that was almost constant.
+ * 
+ * Along with Movie selection, an option to buy Popcorn was implemented. The code was
+ * implemented after making a state machine diagram, used as a base to write the code for
+ * the events and states thought previously.
+ * 
+ * 
+ * @author Gonçalo Soares & Gonçalo Rodrigues
+ * @date 10 May 2023
+ * @bug No known bugs.
  */
+
 
 #include <zephyr/kernel.h>          /* for k_msleep() */
 #include <zephyr/device.h>          /* for device_is_ready() and device structure */
@@ -15,29 +27,30 @@
 #define SLEEP_TIME_MS   60*1000 
 
 /* Events */
-#define COIN1    11
-#define COIN2    12
-#define COIN5    24
-#define COIN10   25
-#define RETURN    3
-#define SELECT    4
-#define DOWN     28
-#define UP       29
-#define NO_EVENT  0
+#define COIN1    11	/**< Add 1 EUR to the credit via Button 1, Pin 11. 			*/
+#define COIN2    12	/**< Add 2 EUR to the credit via Button 2, Pin 12. 			*/
+#define COIN5    24	/**< Add 5 EUR to the credit via Button 3, Pin 24. 			*/
+#define COIN10   25	/**< Add 10 EUR to the credit via Button 4, Pin 25. 		*/
+#define RETURN    3	/**< Button to return the credit, Pin 3.					*/
+#define SELECT    4	/**< Button to select, Pin 4.								*/
+#define DOWN     28	/**< Navigation button down, Pin 28.						*/
+#define UP       29	/**< Navigation button up, Pin 29.							*/
+#define NO_EVENT  0	/**< Variable to prevent infinite loops within the states.	*/
 
 /* States */
-#define GETTING_COINS_ST 5
-#define MOVIE_ST         6
-#define BUY_ST           7
+#define GETTING_COINS_ST 5	/**< State where the user inserts coins. 							*/
+#define MOVIE_ST         6	/**< State where the user selects the movie.						*/
+#define BUY_ST           7	/**< State where the user buys the ticket. 							*/
+#define POPCORN_ST       8	/**< State where the user selects the amount of popcorn they want. 	*/
 
 /* Events */
-volatile int Event = 0;
+volatile int Event = 0;	/**< Variable to store the event that ocurred. (Button Interrupt)	*/
 
 /* Set the pins used for LED and buttons */
 /* LED 1 and buttons 1-4 are the ones on board */
 /* Buttons 5-8 are connected to pins labeled A0 ... A3 (gpio0 pins 3,4,28,29) */
-#define LED1_PIN 13
-const uint8_t buttons_pins[] = {COIN1,COIN2,COIN5,COIN10,RETURN,SELECT,DOWN,UP}; /* vector with pins where buttons are connected */
+#define LED1_PIN 13	/* Debug purposes */
+const uint8_t buttons_pins[] = {COIN1,COIN2,COIN5,COIN10,RETURN,SELECT,DOWN,UP}; /* Vector with pins where buttons are connected */
 
 /* Get node ID for GPIO0, which has leds and buttons */ 
 #define GPIO0_NODE DT_NODELABEL(gpio0)
@@ -49,12 +62,12 @@ static const struct device * gpio0_dev = DEVICE_DT_GET(GPIO0_NODE);
 *  It defines e.g. which pin triggers the callback and the address of the function */
 static struct gpio_callback button_cb_data;
 
-/* Function that enable the interrupts */
+/* Function that enables the interrupts */
 void enableInterrupts(int pin){
 	gpio_pin_interrupt_configure(gpio0_dev, pin, GPIO_INT_EDGE_TO_ACTIVE);
 }
 
-/* Function that disable the interrupts */
+/* Function that disables the interrupts */
 void disableInterrupts(int pin){
 	gpio_pin_interrupt_configure(gpio0_dev, pin, GPIO_INT_DISABLE);
 }
@@ -120,7 +133,6 @@ void main(void)
 {
 	int ret, i;
 	uint32_t pinmask = 0; /* Mask for setting the pins that shall generate interrupts */
-	
 
 	/* Check if gpio0 device is ready */
 	if (!device_is_ready(gpio0_dev)) {
@@ -169,8 +181,8 @@ void main(void)
 	/* Add the callback function by calling gpio_add_callback()   */
 	gpio_add_callback(gpio0_dev, &button_cb_data);
 
-	/* Declarations */
-	int credit = 0, movie_id = 0, movie_size = 0;
+	/* Variables to store all the information needed */
+	int credit = 0, movie_id = 0, movie_size = 0, popcorn = 0, sumAll = 0;
 	int state = GETTING_COINS_ST, next_state = state;
 	movie infoMovie;
 	
@@ -185,13 +197,14 @@ void main(void)
 	addMovie("Movie B", 10, 19, 0);
 	addMovie("Movie B", 12, 21, 0);
 
+	/* Get the size of the linked list (Dynamic)*/
 	movie_size = sizeMovies();
 
 	printk("\n");
 	while (1) {
 		switch (state){
-			case GETTING_COINS_ST:
-				printk("Credit = %.3d EUR\r", credit);
+			case GETTING_COINS_ST:	
+				printk("Credit = %.3d EUR\t\t Basket: %.3d EUR\r", credit,sumAll);
 				
 				switch(Event){
 					case COIN1:           // Coin 1 inserted 
@@ -232,6 +245,7 @@ void main(void)
 				}
 				break;
 
+			/* Movie State goes after the Getting Coins State */
 			case MOVIE_ST:
 				switch(Event){
 					case DOWN:            // Down button pressed
@@ -245,7 +259,7 @@ void main(void)
 						next_state = GETTING_COINS_ST;
 						break;
 					case SELECT: 
-						next_state = BUY_ST;
+						next_state = POPCORN_ST;
 						break;
 					default:
 						Event = NO_EVENT; // Reset Event
@@ -257,35 +271,59 @@ void main(void)
 				Event = NO_EVENT;
 				break; 
 			
+			/* Buy State goes after Movie and Popcorn States */
 			case BUY_ST:
 				infoMovie = returnMovie(movie_id);
 				printk("\n");
-				if (credit < infoMovie.price){
-					printk("Not enough credit. Ticket no issued.\n");
+				sumAll = infoMovie.price + popcorn*2;
+				if (credit < sumAll){
+					printk("Not enough credit. Ticket not issued.\n");
 					next_state = GETTING_COINS_ST;
 				}
 				else{
-					printk("Ticket for movie %s, session %d:%.2d issued.",infoMovie.name, infoMovie.hours, infoMovie.minutes);
-					credit -= infoMovie.price;
+					printk("Ticket for movie %s, session %d:%.2d and %d popcorn issued.",infoMovie.name, infoMovie.hours, infoMovie.minutes, popcorn);
+					credit -= sumAll;
 					printk(" Remaining credit: %.2d EUR\n", credit);
-					
+					popcorn = 0;
+					sumAll = 0;
 					next_state = GETTING_COINS_ST;
 				}
 				printk("\n");
 				Event = NO_EVENT;
 				break;
 
+			/* Popcorn State goes after the Movie State */
+			case POPCORN_ST:
+				printk("Popcorn Quantity: ");
+				switch(Event){
+					case DOWN:            // Down button pressed
+						if(popcorn == 0)	popcorn = 0;
+						else popcorn--;
+						next_state = GETTING_COINS_ST;
+						break;
+					case UP:              // Up button pressed
+						if(popcorn == 10) 	popcorn = 10;
+						else popcorn++;
+						next_state = GETTING_COINS_ST;
+						break;
+					case SELECT: 
+						next_state = BUY_ST;
+						break;
+					default:
+						Event = NO_EVENT; // Reset Event
+						break;
+				}
+				printk("%.2d (Price: %.2d EUR)\r", popcorn, popcorn*2);
+				break;
 
 			default:
 				Event = NO_EVENT;
 				break;
 		}
 		state = next_state;
-	
 	}
 
-	/* Just sleep. Led 
-	on/off is done by the int callback */
+	/* Just sleep. Led ON/OFF is done by the int callback */
 	k_msleep(SLEEP_TIME_MS);
 }
 
