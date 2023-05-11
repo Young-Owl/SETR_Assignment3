@@ -48,7 +48,7 @@ void printMovie(uint32_t id){
     node *temp = head;
     while(temp != NULL){
         if(temp->movie.id == id){
-            printk("\t\t\tMovie: %s   |", temp->movie.name);
+            printk("\t\t\t\t\t\t\tMovie: %s   |", temp->movie.name);
 			printk("Price: %.2d   |", temp->movie.price);
 			printk("Time: %d:%.2d\r", temp->movie.hours, temp->movie.minutes);
 

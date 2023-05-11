@@ -266,7 +266,8 @@ void main(void)
 						next_state = MOVIE_ST;
 						break;
 					case SELECT:		  // Select button pressed
-						next_state = BUY_ST;
+						if(popcornFlag == 1) next_state = POPCORN_ST;
+						if(popcornFlag == 0) next_state = BUY_ST;
 						break;
 					case RETURN: 		  // Return button pressed
 						printk("\n%.4d EUR return\n",credit);
