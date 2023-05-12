@@ -281,9 +281,14 @@ void main(void)
 						} 
 						break;
 					case RETURN: 		  // Return button pressed
-						printk("\n%.4d EUR return\n",credit);
+						if(credit == 0) { printk("\nNo credit to return.");}
+						if(popcornFlag ==1) { printk("\nOperation canceled, %.4d EUR return.\n", credit);}
+						printk("\n%.4d EUR return.\n",credit);
 						printk("\n");
+						popcornFlag = 0;
 						credit = 0;
+						sumAll = 0;
+						popcorn = 0;
 						Event = NO_EVENT;
 						break;
 					case NO_EVENT:        // No Coin inserted
@@ -315,7 +320,6 @@ void main(void)
 						break;
 				}
 				infoMovie = returnMovie(movie_id);
-				sumAll = infoMovie.price;
 
 				printMovie(movie_id);
 
@@ -325,7 +329,7 @@ void main(void)
 			/* Popcorn State goes after the Movie State */
 			case POPCORN_ST:
 				popcornFlag = 1;
-				printk("\t\t\t\t\t\tPopcorn Quantity: ");
+				printk("\t\t\t\t\t\t\tPopcorn Quantity: ");
 				switch(Event){
 					case DOWN:            // Down button pressed
 						popcorn --;
@@ -345,18 +349,20 @@ void main(void)
 						Event = NO_EVENT; // Reset Event
 						break;
 				}
-				printk("\t\t\t\t %.2d (Price: %.2d EUR)\r", popcorn, popcorn*2);
-				sumAll += popcorn*2;
+				
+				printk("\t%.2d (Price: %.2d EUR)\r", popcorn, popcorn*2);
 				Event = NO_EVENT;
+				sumAll = infoMovie.price + popcorn*2;
 				break;
 
 			/* Buy State goes after Movie and Popcorn States */
 			case BUY_ST:
 				infoMovie = returnMovie(movie_id);
 				printk("\n");
-				sumAll = infoMovie.price + popcorn*2;
 				if (credit < sumAll){
 					printk("Not enough credit. Ticket not issued.\n");
+					popcorn = 0;
+					sumAll = 0;
 					next_state = GETTING_COINS_ST;
 				}
 				else{
