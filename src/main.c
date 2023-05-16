@@ -145,7 +145,7 @@ digraph finite_state_machine {
     GETTING_COINS_ST -> GETTING_COINS_ST [ label = "                                                        COIN10/credit+=10" ];
     GETTING_COINS_ST -> GETTING_COINS_ST [ label = "                                                     RETURN/credit=0" ];
     GETTING_COINS_ST -> GETTING_COINS_ST [ label = "                                            NO_EVENT/" ];
-
+	GETTING_COINS_ST -> GETTING_COINS_ST [ label = "                                            RETURN/(credit = 0,popcornFlag = 0, popcorn = 0, sumAll = 0)" ];
 	GETTING_COINS_ST -> MOVIE_ST [ label = "UP[popcornFlag = 0]/" ];
     GETTING_COINS_ST -> MOVIE_ST [ label = "DOWN[popcornFlag = 0]/" ];
 
@@ -153,11 +153,14 @@ digraph finite_state_machine {
     MOVIE_ST -> GETTING_COINS_ST;
 
     POPCORN_ST -> BUY_ST [ label = "SELECT/"];
-    POPCORN_ST -> GETTING_COINS_ST;
+    POPCORN_ST -> GETTING_COINS_ST [ label = "/sumAll = infoMovie.price + popcorn*2"];
+
     GETTING_COINS_ST -> POPCORN_ST [ label = "UP[popcornFlag = 1]/" ];
     GETTING_COINS_ST -> POPCORN_ST [ label = "DOWN[popcornFlag = 1]/" ];
+	GETTING_COINS_ST -> POPCORN_ST [ label = "SELECT/popcornFlag = 1" ];
 
-    BUY_ST -> GETTING_COINS_ST [ label = "/credit - sumAll"];
+    BUY_ST -> GETTING_COINS_ST [ label = "/ popcornFlag = 0"];
+	GETTING_COINS_ST -> BUY_ST [ label = "SELECT[popcornFlag = 1]/" ];
 
 }
 \enddot
